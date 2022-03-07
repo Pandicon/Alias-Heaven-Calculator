@@ -15,8 +15,8 @@ use eframe::{
 use std::env;
 use winconsole;
 
-const W: f32 = 675.0;
-const H: f32 = 400.0;
+const W: f32 = 640.0;
+const H: f32 = 360.0;
 
 impl App for Calculator {
     fn setup(&mut self, ctx: &egui::Context, _frame: &epi::Frame, _storage: Option<&dyn epi::Storage>) {
