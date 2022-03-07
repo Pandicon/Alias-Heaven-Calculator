@@ -1,0 +1,26 @@
+[package]
+name = "alias-heaven-calculator"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dotenv = "0.15.0"
+eframe = "0.17.0"
+image = "0.24.1"
+rand = "0.8.5"
+serde = "1.0.0"
+serde_json = "1.0.0"
+serde_derive = "1.0.0"
+tracing = "0.1.31"
+tracing-subscriber = "0.3.9"
+winconsole = {version = "0.11.1", features = ["window"]}
+
+[build-dependencies]
+chrono = "0.4.19"
+const-gen = "1.0.0"
+dotenv = "0.15.0"
+image = "0.24.1"
+toml = "0.5.8"
+winres = "0.1.12"
