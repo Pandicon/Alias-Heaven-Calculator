@@ -15,8 +15,8 @@ use eframe::{
 use std::env;
 use winconsole;
 
-const W: f32 = 540.0;
-const H: f32 = 900.0;
+const W: f32 = 675.0;
+const H: f32 = 400.0;
 
 impl App for Calculator {
     fn setup(&mut self, ctx: &egui::Context, _frame: &epi::Frame, _storage: Option<&dyn epi::Storage>) {
@@ -29,8 +29,8 @@ impl App for Calculator {
         }
         self.render_top_panel(ctx);
         CentralPanel::default().show(ctx, |ui| {
-            ScrollArea::new([true, false]).show(ui, |mut ui| {
-                self.render_window(&mut ui, H);
+            ScrollArea::new([false, true]).show(ui, |mut ui| {
+                self.render_window(&mut ui);
             });
             self.render_footer(ctx);
         });
