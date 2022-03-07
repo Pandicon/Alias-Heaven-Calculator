@@ -5,8 +5,7 @@ use eframe::{
 	}
 };
 use std::{
-	collections::HashMap,
-	time::{SystemTime, UNIX_EPOCH}
+	collections::HashMap
 };
 
 const MONOSPACE_FONT_BYTES: &[u8] = include_bytes!("../assets/fonts/monospace_font.ttf");
@@ -184,7 +183,7 @@ impl Calculator {
 			legacies += 1;
 		}
 		if self.values.secret_area {
-			legacies -= 5;
+			legacies -= self.secret_area_cost;
 		}
 		ui.label(RichText::new(format!("Final role: Legacy {}", legacies)).text_style(Body).size(18.0));
 	}
