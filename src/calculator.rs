@@ -20,6 +20,17 @@ pub struct Values {
 	negacies_converted: i64
 }
 
+impl Values {
+	fn new() -> Self {
+		Self {
+			general_messages: 0,
+			counting_messages: 0,
+			secret_area: false,
+			negacies_converted: 0
+		}
+	}
+}
+
 pub struct Calculator {
 	pub textures: HashMap<String, TextureHandle>,
 	pub textures_loaded: bool,
@@ -28,7 +39,8 @@ pub struct Calculator {
 	version: String,
 	general_legacies: Vec<i64>,
 	counting_legacies: Vec<i64>,
-	secret_area_cost: i64
+	secret_area_cost: i64,
+	values: Values
 }
 
 impl Calculator {
@@ -41,7 +53,8 @@ impl Calculator {
 			version,
 			general_legacies,
 			counting_legacies,
-			secret_area_cost
+			secret_area_cost,
+			values: Values::new()
 		}
 	}
 
@@ -73,19 +86,6 @@ impl Calculator {
 		});
 	}
 
-	pub fn initialise_textures(&mut self, ctx: &egui::Context, images: Vec<&[u8]>, names: Vec<String>, sizes: Vec<[usize; 2]>) {
-		for i in 0..images.len() {
-			let pixels = images[i];
-			let name = &names[i];
-			let mut texture: Option<TextureHandle> = None;
-			let tx: &TextureHandle = texture.get_or_insert_with(|| {
-				ctx.load_texture(name, egui::ColorImage::from_rgba_unmultiplied(sizes[i], pixels))
-			});
-			self.textures.insert(name.to_owned(), tx.to_owned());
-		}
-		self.textures_loaded = true;
-	}
-
 	pub fn render_footer(&self, ctx: &Context) {
 		TopBottomPanel::bottom("footer").show(ctx, |ui| {
 			ui.vertical_centered(|ui| {
@@ -115,7 +115,7 @@ impl Calculator {
 	}
 
 	pub fn name(&self) -> &str {
-		"Alias Heaven Calculator"
+		"Alias' Heaven Calculator"
 	}
 
 	pub fn render_info(&mut self, ctx: &Context) {
@@ -143,18 +143,53 @@ impl Calculator {
 		});
 	}
 	
-	pub fn render_window(&mut self, ui: &mut Ui, initial_h: f32) {
-		
+	pub fn render_window(&mut self, ui: &mut Ui) {
+		ui.label(RichText::new("Legacy roles").text_style(Heading).size(20.0));
+		ui.horizontal(|ui| {
+			ui.add(egui::DragValue::new(&mut self.values.general_messages).speed(10));
+			ui.label(RichText::new("Messages you sent in the general chat").text_style(Body));
+		});
+		if self.values.general_messages < 0 {
+			self.values.general_messages = 0;
+		}
+		ui.horizontal(|ui| {
+			ui.add(egui::DragValue::new(&mut self.values.counting_messages).speed(10));
+			ui.label(RichText::new("Valid messages you sent in the counting channel").text_style(Body));
+		});
+		if self.values.counting_messages < 0 {
+			self.values.counting_messages = 0;
+		}
+		ui.horizontal(|ui| {
+			ui.add(egui::DragValue::new(&mut self.values.negacies_converted).speed(0.01));
+			ui.label(RichText::new("Negacy roles you converted into legacy ones (you can only do that once you max out your negacy roles)").text_style(Body));
+		});
+		if self.values.negacies_converted < 0 {
+			self.values.negacies_converted = 0;
+		}
+		ui.horizontal(|ui| {
+			ui.checkbox(&mut self.values.secret_area, "");
+			ui.label(RichText::new("Do you have access to the secret area?").text_style(Body));
+		});
+		let mut legacies = self.values.negacies_converted;
+		for n in &self.general_legacies {
+			if &self.values.general_messages < n {
+				break;
+			}
+			legacies += 1;
+		}
+		for n in &self.counting_legacies {
+			if &self.values.counting_messages < n {
+				break;
+			}
+			legacies += 1;
+		}
+		if self.values.secret_area {
+			legacies -= 5;
+		}
+		ui.label(RichText::new(format!("Final role: Legacy {}", legacies)).text_style(Body).size(18.0));
 	}
 
 	pub fn default_frame(&self) -> egui::Frame {
 		egui::Frame::default().stroke(egui::Stroke::new(2.0, Color32::from_rgb(43, 43, 43))).margin(egui::style::Margin::symmetric(7.0, 2.0)).fill(Color32::from_rgb(27, 27, 27))
 	}
-}
-
-fn get_unix() -> u128 {
-	let start = SystemTime::now();
-    start.duration_since(UNIX_EPOCH)
-        .expect("Time went backwards")
-		.as_millis()
 }
