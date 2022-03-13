@@ -48,10 +48,12 @@ fn main() {
         env::set_var("RUST_LOG", "INFO");
     }
     match env::var("LOGS") {
-        Ok(val) => if val.to_lowercase() != "on" {
+        Ok(val) => if val.to_lowercase() != "on" && cfg!(target_os = "windows") {
             winconsole::window::hide();
         },
-        Err(_) => winconsole::window::hide()
+        Err(_) => if cfg!(target_os = "windows") {
+            winconsole::window::hide()
+        }
     }
     tracing_subscriber::fmt::init();
 
@@ -60,7 +62,6 @@ fn main() {
     let version = VERSION.to_string();
     let general_legacies = GENERAL_LEGACIES.iter().cloned().collect();
     let counting_legacies = COUNTING_LEGACIES.iter().cloned().collect();
-    println!("{:?}", general_legacies);
 
     let app = Calculator::new(build_date, version, general_legacies, counting_legacies, SECRET_AREA_COST);
     let mut window_options = NativeOptions::default();
