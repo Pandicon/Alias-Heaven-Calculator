@@ -13,12 +13,13 @@ const REGULAR_FONT_BYTES: &[u8] = include_bytes!("../assets/fonts/regular_font.o
 const PADDING: f32 = 5.0;
 
 pub struct Values {
-	general_messages: i64,
-	counting_messages: i64,
+	general_messages: u64,
+	counting_messages: u64,
 	secret_area: bool,
-	negacies_converted: i64,
+	negacies_converted: u64,
 	negacies_converted_toggle: bool,
-	negacies_earned: i64
+	negacies_earned: u64,
+	quacks: u64
 }
 
 impl Values {
@@ -29,7 +30,8 @@ impl Values {
 			secret_area: false,
 			negacies_converted: 0,
 			negacies_converted_toggle: true,
-			negacies_earned: 0
+			negacies_earned: 0,
+			quacks: 0
 		}
 	}
 }
@@ -40,14 +42,16 @@ pub struct Calculator {
 	pub info_active: bool,
 	build_date: Vec<String>,
 	version: String,
-	general_legacies: Vec<i64>,
-	counting_legacies: Vec<i64>,
-	secret_area_cost: i64,
+	general_legacies: Vec<u64>,
+	counting_legacies: Vec<u64>,
+	secret_area_cost: u64,
+	quacker_roles: Vec<u64>,
+	quacker_roles_names: Vec<String>,
 	values: Values
 }
 
 impl Calculator {
-	pub fn new(build_date: Vec<String>, version: String, general_legacies: Vec<i64>, counting_legacies: Vec<i64>, secret_area_cost: i64) -> Self {
+	pub fn new(build_date: Vec<String>, version: String, general_legacies: Vec<u64>, counting_legacies: Vec<u64>, secret_area_cost: u64, quacker_roles: Vec<u64>, quacker_roles_names: Vec<String>) -> Self {
 		Self {
 			textures: HashMap::new(),
 			textures_loaded: false,
@@ -57,6 +61,8 @@ impl Calculator {
 			general_legacies,
 			counting_legacies,
 			secret_area_cost,
+			quacker_roles,
+			quacker_roles_names,
 			values: Values::new()
 		}
 	}
@@ -160,9 +166,6 @@ impl Calculator {
 				"Legacy roles you converted into negacy ones (you can only do that once you max out your legacy roles)"
 			}).text_style(Body));
 		});
-		if self.values.negacies_converted < 0 {
-			self.values.negacies_converted = 0;
-		}
 	}
 	
 	fn render_legacies(&mut self, ui: &mut Ui) {
@@ -171,21 +174,15 @@ impl Calculator {
 			ui.add(egui::DragValue::new(&mut self.values.general_messages).speed(10));
 			ui.label(RichText::new("Messages you sent in the general chat").text_style(Body));
 		});
-		if self.values.general_messages < 0 {
-			self.values.general_messages = 0;
-		}
 		ui.horizontal(|ui| {
 			ui.add(egui::DragValue::new(&mut self.values.counting_messages).speed(10));
 			ui.label(RichText::new("Valid messages you sent in the counting channel").text_style(Body));
 		});
-		if self.values.counting_messages < 0 {
-			self.values.counting_messages = 0;
-		}
 		ui.horizontal(|ui| {
 			ui.checkbox(&mut self.values.secret_area, "");
 			ui.label(RichText::new("Do you have access to the secret area?").text_style(Body));
 		});
-		let mut legacies = self.values.negacies_converted * (if self.values.negacies_converted_toggle {
+		let mut legacies = (self.values.negacies_converted as i64) * (if self.values.negacies_converted_toggle {
 			1
 		} else {
 			-1
@@ -203,7 +200,7 @@ impl Calculator {
 			legacies += 1;
 		}
 		if self.values.secret_area {
-			legacies -= self.secret_area_cost;
+			legacies -= self.secret_area_cost as i64;
 		}
 		ui.label(RichText::new(format!("Final role: Legacy {}", legacies)).text_style(Body).size(18.0));
 	}
@@ -214,15 +211,29 @@ impl Calculator {
 			ui.add(egui::DragValue::new(&mut self.values.negacies_earned).speed(0.01));
 			ui.label(RichText::new("Negacy roles you earned").text_style(Body));
 		});
-		if self.values.negacies_earned < 0 {
-			self.values.negacies_earned = 0;
-		}
-		let negacies = self.values.negacies_earned + self.values.negacies_converted * if self.values.negacies_converted_toggle {
+		let negacies = (self.values.negacies_earned as i64) + (self.values.negacies_converted as i64) * if self.values.negacies_converted_toggle {
 			-1
 		} else {
 			1
 		};
 		ui.label(RichText::new(format!("Final role: Negacy {}", negacies)).text_style(Body).size(18.0));
+	}
+
+	fn render_quacks(&mut self, ui: &mut Ui) {
+		ui.label(RichText::new("Quacker roles").text_style(Heading).size(20.0));
+		ui.horizontal(|ui| {
+			ui.add(egui::DragValue::new(&mut self.values.quacks).speed(10));
+			ui.label(RichText::new("Valid quacks you sent").text_style(Body));
+		});
+		let mut quack_role = 0;
+		for n in &self.quacker_roles {
+			if &self.values.quacks < n {
+				break;
+			}
+			quack_role += 1;
+		}
+		let quack_role = &self.quacker_roles_names[quack_role];
+		ui.label(RichText::new(format!("Final role: {}", quack_role)).text_style(Body).size(18.0));
 	}
 
 	pub fn render_window(&mut self, ui: &mut Ui) {
@@ -231,6 +242,8 @@ impl Calculator {
 		self.render_legacies(ui);
 		ui.label("");
 		self.render_negacies(ui);
+		ui.label("");
+		self.render_quacks(ui)
 	}
 
 	pub fn default_frame(&self) -> egui::Frame {

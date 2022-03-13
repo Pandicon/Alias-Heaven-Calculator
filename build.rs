@@ -14,8 +14,12 @@ fn zero_nothing(num: i64) -> String {
     })
 }
 
-fn to_i64_vec(arr: &Value) -> Vec<i64> {
-    arr.as_array().unwrap().iter().map(|val| val.as_integer().unwrap()).collect::<Vec<i64>>()
+fn to_u64_vec(arr: &Value) -> Vec<u64> {
+    arr.as_array().unwrap().iter().map(|val| val.as_integer().unwrap() as u64).collect::<Vec<u64>>()
+}
+
+fn to_str_vec(arr: &Value) -> Vec<&str> {
+    arr.as_array().unwrap().iter().map(|val| val.as_str().unwrap()).collect::<Vec<&str>>()
 }
 
 fn main() {
@@ -53,9 +57,11 @@ fn main() {
         const_declaration!(ICON_HEIGHT = icon.height()),
         const_declaration!(VERSION = cargo_toml["package"]["version"].as_str().unwrap()),
         const_declaration!(BUILD_DATE = date),
-        const_declaration!(GENERAL_LEGACIES = to_i64_vec(&config_toml["general_legacies"])),
-        const_declaration!(COUNTING_LEGACIES = to_i64_vec(&config_toml["counting_legacies"])),
-        const_declaration!(SECRET_AREA_COST = config_toml["secret_area_cost"].as_integer().unwrap())
+        const_declaration!(GENERAL_LEGACIES = to_u64_vec(&config_toml["general_legacies"])),
+        const_declaration!(COUNTING_LEGACIES = to_u64_vec(&config_toml["counting_legacies"])),
+        const_declaration!(SECRET_AREA_COST = (config_toml["secret_area_cost"].as_integer().unwrap() as u64)),
+        const_declaration!(QUACKER_ROLES = to_u64_vec(&config_toml["quacker_roles"])),
+        const_declaration!(QUACKER_ROLES_NAMES = to_str_vec(&config_toml["quacker_roles_names"]))
     }.join("\n");
     fs::write(&dest_path, const_declarations).unwrap();
 	if cfg!(target_os = "windows") {

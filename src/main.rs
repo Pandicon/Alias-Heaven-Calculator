@@ -31,6 +31,7 @@ impl App for Calculator {
         CentralPanel::default().show(ctx, |ui| {
             ScrollArea::new([false, true]).show(ui, |mut ui| {
                 self.render_window(&mut ui);
+                ui.label(egui::RichText::new("").size(25.0));
             });
             self.render_footer(ctx);
         });
@@ -62,8 +63,10 @@ fn main() {
     let version = VERSION.to_string();
     let general_legacies = GENERAL_LEGACIES.iter().cloned().collect();
     let counting_legacies = COUNTING_LEGACIES.iter().cloned().collect();
+    let quacker_roles = QUACKER_ROLES.iter().cloned().collect();
+    let quacker_roles_names = QUACKER_ROLES_NAMES.iter().cloned().map(|val| val.to_string()).collect();
 
-    let app = Calculator::new(build_date, version, general_legacies, counting_legacies, SECRET_AREA_COST);
+    let app = Calculator::new(build_date, version, general_legacies, counting_legacies, SECRET_AREA_COST, quacker_roles, quacker_roles_names);
     let mut window_options = NativeOptions::default();
     window_options.icon_data = Some(IconData {rgba: icon_rgba, width: ICON_WIDTH, height: ICON_HEIGHT});
     window_options.initial_window_size = Some(Vec2::new(W, H));
