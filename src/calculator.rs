@@ -16,7 +16,9 @@ pub struct Values {
 	general_messages: i64,
 	counting_messages: i64,
 	secret_area: bool,
-	negacies_converted: i64
+	negacies_converted: i64,
+	negacies_converted_toggle: bool,
+	negacies_earned: i64
 }
 
 impl Values {
@@ -25,7 +27,9 @@ impl Values {
 			general_messages: 0,
 			counting_messages: 0,
 			secret_area: false,
-			negacies_converted: 0
+			negacies_converted: 0,
+			negacies_converted_toggle: true,
+			negacies_earned: 0
 		}
 	}
 }
@@ -142,7 +146,26 @@ impl Calculator {
 		});
 	}
 	
-	pub fn render_window(&mut self, ui: &mut Ui) {
+	fn render_leg_neg_conversion(&mut self, ui: &mut Ui) {
+		ui.label(RichText::new("Legacy and negacy roles converting").text_style(Heading).size(20.0));
+		ui.horizontal(|ui| {
+			ui.checkbox(&mut self.values.negacies_converted_toggle, "");
+			ui.label(RichText::new("Did you convert negacy roles to legacy roles?").text_style(Body));
+		});
+		ui.horizontal(|ui| {
+			ui.add(egui::DragValue::new(&mut self.values.negacies_converted).speed(0.01));
+			ui.label(RichText::new(if self.values.negacies_converted_toggle { 
+				"Negacy roles you converted into legacy ones (you can only do that once you max out your negacy roles)"
+			} else {
+				"Legacy roles you converted into negacy ones (you can only do that once you max out your legacy roles)"
+			}).text_style(Body));
+		});
+		if self.values.negacies_converted < 0 {
+			self.values.negacies_converted = 0;
+		}
+	}
+	
+	fn render_legacies(&mut self, ui: &mut Ui) {
 		ui.label(RichText::new("Legacy roles").text_style(Heading).size(20.0));
 		ui.horizontal(|ui| {
 			ui.add(egui::DragValue::new(&mut self.values.general_messages).speed(10));
@@ -159,17 +182,14 @@ impl Calculator {
 			self.values.counting_messages = 0;
 		}
 		ui.horizontal(|ui| {
-			ui.add(egui::DragValue::new(&mut self.values.negacies_converted).speed(0.01));
-			ui.label(RichText::new("Negacy roles you converted into legacy ones (you can only do that once you max out your negacy roles)").text_style(Body));
-		});
-		if self.values.negacies_converted < 0 {
-			self.values.negacies_converted = 0;
-		}
-		ui.horizontal(|ui| {
 			ui.checkbox(&mut self.values.secret_area, "");
 			ui.label(RichText::new("Do you have access to the secret area?").text_style(Body));
 		});
-		let mut legacies = self.values.negacies_converted;
+		let mut legacies = self.values.negacies_converted * (if self.values.negacies_converted_toggle {
+			1
+		} else {
+			-1
+		});
 		for n in &self.general_legacies {
 			if &self.values.general_messages < n {
 				break;
@@ -186,6 +206,31 @@ impl Calculator {
 			legacies -= self.secret_area_cost;
 		}
 		ui.label(RichText::new(format!("Final role: Legacy {}", legacies)).text_style(Body).size(18.0));
+	}
+	
+	fn render_negacies(&mut self, ui: &mut Ui) {
+		ui.label(RichText::new("Negacy roles").text_style(Heading).size(20.0));
+		ui.horizontal(|ui| {
+			ui.add(egui::DragValue::new(&mut self.values.negacies_earned).speed(0.01));
+			ui.label(RichText::new("Negacy roles you earned").text_style(Body));
+		});
+		if self.values.negacies_earned < 0 {
+			self.values.negacies_earned = 0;
+		}
+		let negacies = self.values.negacies_earned + self.values.negacies_converted * if self.values.negacies_converted_toggle {
+			-1
+		} else {
+			1
+		};
+		ui.label(RichText::new(format!("Final role: Negacy {}", negacies)).text_style(Body).size(18.0));
+	}
+
+	pub fn render_window(&mut self, ui: &mut Ui) {
+		self.render_leg_neg_conversion(ui);
+		ui.label("");
+		self.render_legacies(ui);
+		ui.label("");
+		self.render_negacies(ui);
 	}
 
 	pub fn default_frame(&self) -> egui::Frame {
